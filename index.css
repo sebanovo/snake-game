@@ -1,0 +1,38 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+body,
+html {
+  height: 100%;
+  width: 100%;
+  background-color: #000;
+}
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+canvas {
+  background-color: #0000;
+  border: 1px solid #fff;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 100px;
+}
+
+h1 {
+  color: white;
+  font-size: large ;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
