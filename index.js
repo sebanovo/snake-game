@@ -4,14 +4,21 @@ const score = document.getElementById('score')
 const highScore = document.getElementById('high-score')
 
 highScore.textContent = window.localStorage.getItem('highScore') || score.textContent
+const FPS = 100
+const sizeSquareMap = canvas.width / 15
+const totalSquare = canvas.width * canvas.height / Math.pow(sizeSquareMap, 2)
 
-const FPS = 10
 const level = {
   score,
   highScore,
+  win: false,
   gameOver: false,
-  setIntervalId: null
+  setIntervalId: null,
+  gridLineSize: 0.2,
+  gridSize: totalSquare 
 }
+
+
 
 const KEY = {
   UP: 'ArrowUp',
@@ -21,27 +28,31 @@ const KEY = {
 }
 
 function randomX() {
-  return Math.floor(Math.random() * (canvas.width / 10)) * 10
+  return Math.floor(Math.random() * (canvas.width / sizeSquareMap)) * sizeSquareMap
 }
 
 function randomY() {
-  return Math.floor(Math.random() * (canvas.height / 10)) * 10
+  return Math.floor(Math.random() * (canvas.height / sizeSquareMap)) * sizeSquareMap
 }
 
 const head = {
   x: randomX(),
   y: randomY(),
-  size: 10,
+  size: sizeSquareMap,
   dx: 0,
   dy: 0,
   direction: null
 }
 const snakeBody = [head]
 
+const appleImg = new Image(300, 300)
+appleImg.src = './apple.png'
+
 const food = {
   x: randomX(),
   y: randomY(),
-  size: 10
+  size: sizeSquareMap,
+  appleImg
 }
 
 document.addEventListener('keydown', e => {
@@ -66,21 +77,23 @@ document.addEventListener('keydown', e => {
 })
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && level.gameOver) {
+  if (e.key === 'Enter' && (level.gameOver || level.win)) {
     document.location.reload()
   }
 })
 
 function drawSnake() {
   for (let i = 0; i < snakeBody.length; i++) {
+    ctx.globalCompositeOperation = 'color'
     ctx.fillStyle = 'green'
     ctx.fillRect(snakeBody[i].x, snakeBody[i].y, snakeBody[i].size, snakeBody[i].size)
   }
 }
 
 function drawFood() {
+  ctx.globalCompositeOperation = 'color'
   ctx.fillStyle = 'red'
-  ctx.fillRect(food.x, food.y, food.size, food.size)
+  ctx.drawImage(food.appleImg,0,0,food.appleImg.width, food.appleImg.height,food.x, food.y, food.size, food.size)
 }
 
 function checkColisionFood() {
@@ -89,15 +102,22 @@ function checkColisionFood() {
     snakeBody.push({
       x: food.x,
       y: food.y,
-      size: 10,
+      size: sizeSquareMap,
       dx: 0,
       dy: 0,
       direction: head.direction
     })
     level.score.textContent++
-    for (let i = 0; food.x === snakeBody[i].x && food.y === snakeBody[i].y; i++) {
-      food.x = randomX()
-      food.y = randomY()
+    // check winner
+    if (+level.score.textContent >= level.gridSize) {
+      level.win = true
+      return
+    }
+    for (let i = 0; i < snakeBody.length; i++) {
+      while (snakeBody[i].x === food.x && snakeBody[i].y === snakeBody[i].y) {
+        food.x = randomX()
+        food.y = randomY()
+      }
     }
   }
 }
@@ -141,23 +161,60 @@ function checkGameOver() {
   if (level.gameOver) {
     for (let i = 0; i < snakeBody.length; i++) {
       clearInterval(level.setIntervalId)
+      ctx.globalCompositeOperation = 'source-over'
       ctx.font = '30px Arial'
       ctx.fillStyle = 'white'
       ctx.fillText('Game Over', canvas.width / 2 - 80, canvas.height / 2)
-      window.localStorage.setItem('highScore', level.score.textContent)
+      ctx.font = '23px Arial'
+      ctx.fillText('press "Enter"', canvas.width / 2 - 80, canvas.height / 2 + 23)
+      const currentScore = +level.score.textContent
+      const localScore = +window.localStorage.getItem('highScore') || currentScore
+      if (localScore <= currentScore) {
+        window.localStorage.setItem('highScore', currentScore)
+      }
+    }
+  }
+}
+
+function checkWin() {
+  if (level.win) {
+    clearInterval(level.setIntervalId)
+    ctx.globalCompositeOperation = 'source-over'
+    ctx.font = '30px Arial'
+    ctx.fillStyle = 'white'
+    ctx.fillText('You Win', canvas.width / 2 - 80, canvas.height / 2)
+    ctx.font = '23px Arial'
+    ctx.fillText('press "Enter"', canvas.width / 2 - 80, canvas.height / 2 + 23)
+    const currentScore = +level.score.textContent
+    const localScore = +window.localStorage.getItem('highScore') || currentScore
+    if (localScore <= currentScore) {
+      window.localStorage.setItem('highScore', currentScore)
+    }
+  }
+}
+
+function drawGrid() {
+  for (let f = 0; f < canvas.height; f += sizeSquareMap) {
+    for (let c = 0; c < canvas.width; c += sizeSquareMap) {
+      ctx.globalCompositeOperation = 'color'
+      ctx.strokeStyle = '#000'
+      ctx.lineWidth = level.gridLineSize
+      ctx.strokeRect(f, c, f + sizeSquareMap, c + sizeSquareMap)
     }
   }
 }
 
 function init() {
   ctx.clearRect(0, 0, canvas.width, canvas.height)
+  drawGrid()
+  drawSnake()
+  drawFood()
   checkColisionWall()
   checkColisionSnakeBody()
   checkGameOver()
   checkColisionFood()
-  drawSnake()
-  drawFood()
+  checkWin()
   moveSnake()
 }
 
-level.setIntervalId = setInterval(init, 1000 / FPS)
+level.setIntervalId = setInterval(init, FPS)
