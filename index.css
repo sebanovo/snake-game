@@ -7,15 +7,16 @@ body,
 html {
   height: 100%;
   width: 100%;
-  background-color: #000;
+  background-color: #242424;
 }
 body {
   display: flex;
   justify-content: center;
   align-items: center;
 }
-canvas {
-  background-color: #000;
+
+#snake-game {
+  background-color: #3b932e;
   border: 1px solid #fff;
 }
 
@@ -27,7 +28,7 @@ canvas {
 
 h1 {
   color: white;
-  font-size: large ;
+  font-size: large;
 }
 
 body {
